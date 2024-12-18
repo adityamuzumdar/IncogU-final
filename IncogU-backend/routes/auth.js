@@ -16,15 +16,48 @@ router.post('/signup', async (req, res) => {
   }
 
   try {
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: 'Email already registered.' });
+    // Check if the user already exists
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      if (existingUser.isVerified) {
+        return res.status(400).json({ message: 'Email already registered and verified.' });
+      }
+
+      // If user is not verified, resend verification email
+      const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        }
+      });
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Resend Email Verification',
+        text: `Your email was already registered but not verified. Please verify your email by clicking on this link: ${process.env.CLIENT_URL}/verify?token=${token}`
+      };
+
+      await transporter.sendMail(mailOptions);
+
+      return res.status(200).json({ message: 'Verification email resent!' });
     }
+
+    // Create a new user with isVerified as false
+    const newUser = new User({
+      email,
+      isVerified: false
+    });
+
+    await newUser.save();
 
     // Generate verification token
     const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    const decoded = jwt.decode(token);
-    
+
     // Send verification email
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -53,7 +86,6 @@ router.post('/signup', async (req, res) => {
 // Verify Email
 router.get('/verify', async (req, res) => {
   const { token } = req.query;
-  console.log(token);
 
   if (!token) {
     return res.status(400).json({ message: 'No token provided.' });
@@ -63,53 +95,93 @@ router.get('/verify', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const { email } = decoded;
 
-    // Check if the email is already verified
+    // Check if the user exists
     const existingUser = await User.findOne({ email });
-    if (existingUser && existingUser.isVerified) {
+    if (!existingUser) {
+      return res.status(400).json({ message: 'User not found.' });
+    }
+
+    // Check if the user is already verified
+    if (existingUser.isVerified) {
       return res.status(400).json({ message: 'Email already verified.' });
     }
 
-    // Create user with the email if it doesn't exist and set email as verified
-    const user = new User({
-      email,
-      isVerified: true
-    });
+    // Update the user's verification status
+    existingUser.isVerified = true;
+    await existingUser.save();
 
-    await user.save();
-    res.status(200).json({ message: 'Email successfully verified!' });
+    res.status(200).json({ message: 'Email successfully verified! Redirecting to set your password.' });
   } catch (error) {
     console.error(error);
     res.status(400).json({ message: 'Invalid or expired token.' });
   }
 });
 
-// Complete Signup - User sets password
 router.post('/complete-signup', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password } = req.body;  // Receive email and password
+
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required.' });
+  }
 
   try {
+    // Find the user by email
     const user = await User.findOne({ email });
+
     if (!user) {
-      return res.status(400).json({ message: 'User not found or email not verified.' });
+      return res.status(400).json({ message: 'User not found.' });
     }
 
-    if (user.password) {
-      return res.status(400).json({ message: 'User already completed signup.' });
+    // Check if the user's email is verified
+    if (!user.isVerified) {
+      return res.status(400).json({ message: 'Email not verified.' });
     }
 
-    // Generate a random username
-    const username = `user_${Math.floor(Math.random() * 1000000)}`;
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    user.username = username;
+    // Hash the password before saving
+    const hashedPassword = await bcrypt.hash(password, 10);
     user.password = hashedPassword;
 
+    // Generate random user ID and assign it
+    const randomUserId = 'user_' + Math.random().toString(36).substr(2, 9); // Example random user ID generation
+    user.username = randomUserId;
+
+    // Save the user with the password and username
     await user.save();
 
-    res.status(200).json({ message: 'Signup completed successfully!' });
+    res.status(200).json({ message: 'Password successfully set!', username: randomUserId });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ message: 'An error occurred during signup.' });
+  }
+});
+
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required.' });
+  }
+
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email });
+
+    // If user doesn't exist
+    if (!user) {
+      return res.status(400).json({ message: 'User not found.' });
+    }
+
+    // Check if password is correct
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials.' });
+    }
+
+    // If credentials are correct, generate a JWT token
+    const token = jwt.sign({ email: user.email, id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    res.status(200).json({ message: 'Login successful!', token });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error.' });

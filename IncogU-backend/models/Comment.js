@@ -1,9 +1,9 @@
-// models/Question.js
 const mongoose = require('mongoose');
 
-const questionSchema = new mongoose.Schema({
-  title: {
-    type: String,
+const commentSchema = new mongoose.Schema({
+  questionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Question',
     required: true,
   },
   content: {
@@ -20,4 +20,4 @@ const questionSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model('Question', questionSchema);
+module.exports = mongoose.model('Comment', commentSchema);
