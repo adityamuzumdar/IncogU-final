@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../AuthProvider'; // Import the AuthProvider hook
 
 const Login = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const navigate = useNavigate();
+  const auth = useAuth(); // Access the authentication context
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,20 +19,23 @@ const Login = () => {
     }
 
     try {
+      // Send login request to the server
       const response = await axios.post('http://localhost:5001/api/auth/login', {
         email,
         password,
       });
 
-      // Store the token in localStorage (or cookies)
-      localStorage.setItem('authToken', response.data.token);
+      const { token } = response.data; // Extract the token from the response
+
+      // Update authentication state using the context
+      auth?.login(token);
 
       setMessage('Login successful!');
       
-      // Redirect the user to the home page or dashboard
+      // Redirect to the home page
       navigate('/');
     } catch (error: any) {
-      // Display the error message from the backend
+      // Handle errors
       if (error.response && error.response.data && error.response.data.message) {
         setMessage(error.response.data.message);
       } else {

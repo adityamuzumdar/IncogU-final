@@ -1,82 +1,41 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React from 'react';
+import { useAuth } from '../AuthProvider';
+import { useNavigate } from 'react-router-dom';
 
-const Home: React.FC = () => {
-    const [posts, setPosts] = useState([]);
-    const [newPost, setNewPost] = useState('');
-    const [newComment, setNewComment] = useState('');
-    const [commentingPostId, setCommentingPostId] = useState<string | null>(null);
+const Home = () => {
+  const auth = useAuth(); // Access the AuthProvider context
+  const navigate = useNavigate();
 
-    const fetchPosts = async () => {
-        try {
-            const res = await axios.get('http://localhost:5001/api/posts/posts');
-            setPosts(res.data);
-        } catch (error) {
-            console.error('Error fetching posts:', error);
-        }
-    };
+  const handleLogout = () => {
+    auth?.logout(); // Clear authentication state
+    navigate('/login'); // Redirect to the login page
+  };
 
-    const createPost = async () => {
-        try {
-            const res = await axios.post('http://localhost:5001/api/posts/posts', { content: newPost });
-            setNewPost('');
-            fetchPosts(); // Re-fetch posts after creating a new one
-        } catch (error) {
-            console.error('Error creating post:', error);
-        }
-    };
+  return (
+    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+      <h1>Welcome to IncogU!</h1>
+      <p>
+        You are successfully logged in. Explore the features and content available to you!
+      </p>
 
-    const addComment = async () => {
-        if (commentingPostId && newComment) {
-            try {
-                const res = await axios.post(`http://localhost:5001/api/posts/${commentingPostId}/comments`, { content: newComment });
-                setNewComment('');
-                setCommentingPostId(null);
-                fetchPosts(); // Re-fetch posts after adding a comment
-            } catch (error) {
-                console.error('Error adding comment:', error);
-            }
-        }
-    };
-
-    return (
-        <div>
-            <h1>Yoo</h1>
-
-            <div>
-                <textarea
-                    value={newPost}
-                    onChange={(e) => setNewPost(e.target.value)}
-                    placeholder="Write a new post"
-                />
-                <button onClick={createPost}>Create Post</button>
-            </div>
-
-            {posts.map((post: any) => (
-                <div key={post._id}>
-                    <p>{post.content}</p>
-                    <button onClick={() => setCommentingPostId(post._id)}>Comment</button>
-
-                    {commentingPostId === post._id && (
-                        <div>
-                            <textarea
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                placeholder="Write a comment"
-                            />
-                            <button onClick={addComment}>Add Comment</button>
-                        </div>
-                    )}
-
-                    {post.comments && post.comments.map((comment: any, index: number) => (
-                        <div key={index}>
-                            <p>{comment.content}</p>
-                        </div>
-                    ))}
-                </div>
-            ))}
-        </div>
-    );
+      {/* Logout Button */}
+      <button
+        onClick={handleLogout}
+        style={{
+          padding: '10px 20px',
+          fontSize: '16px',
+          backgroundColor: '#007BFF',
+          color: 'white',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer',
+          marginTop: '20px',
+        }}
+      >
+        Logout
+      </button>
+    </div>
+  );
 };
 
 export default Home;

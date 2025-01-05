@@ -4,20 +4,29 @@ import VerifyEmail from './components/Auth/Verify';
 import CompleteSignup from './components/Auth/CompleteSignup';
 import Home from './pages/Home';
 import Login from './components/Auth/Login';
+import { AuthProvider } from './AuthProvider';
+import ProtectedRoute from './ProtectedRoute';
 
 const App = () => {
   return (
-    <Router>
-      <div>
+    <AuthProvider>
+      <Router>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/signup" element={<Signup />} />
           <Route path="/verify" element={<VerifyEmail />} />
           <Route path="/complete-signup" element={<CompleteSignup />} />
           <Route path="/login" element={<Login />} />
         </Routes>
-      </div>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 };
 
