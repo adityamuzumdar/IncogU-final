@@ -1,39 +1,106 @@
-import React from 'react';
-import { useAuth } from '../AuthProvider';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+interface Post {
+  _id: string;
+  user: {
+    username: string;
+    email: string;
+  };
+  title: string;
+  content: string;
+  comments: Array<{
+    user: string;
+    text: string;
+  }>;
+}
 
 const Home = () => {
-  const auth = useAuth(); // Access the AuthProvider context
-  const navigate = useNavigate();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [newComment, setNewComment] = useState<string>('');
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
-  const handleLogout = () => {
-    auth?.logout(); // Clear authentication state
-    navigate('/login'); // Redirect to the login page
+  useEffect(() => {
+    // Fetch all posts from the backend
+    axios.get('http://localhost:5001/api/posts')
+      .then((response) => {
+        setPosts(response.data);
+      })
+      .catch((error) => {
+        console.error('Error fetching posts:', error);
+      });
+  }, []);
+
+  const handleCommentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setNewComment(event.target.value);
+  };
+
+  const handleCommentSubmit = async (event: React.FormEvent, postId: string) => {
+    event.preventDefault();
+
+    if (!newComment) {
+      alert('Please enter a comment');
+      return;
+    }
+
+    try {
+      // Post the comment to the backend
+      await axios.post(`http://localhost:5001/api/posts/${postId}/comments`, {
+        userId: 'userIdPlaceholder', // Replace with the actual userId (could be from context or props)
+        text: newComment,
+      });
+
+      // Update the state to reflect the new comment
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post._id === postId
+            ? {
+                ...post,
+                comments: [...post.comments, { user: 'userIdPlaceholder', text: newComment }],
+              }
+            : post
+        )
+      );
+
+      // Clear the comment input field
+      setNewComment('');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>Welcome to IncogU!</h1>
-      <p>
-        You are successfully logged in. Explore the features and content available to you!
-      </p>
-
-      {/* Logout Button */}
-      <button
-        onClick={handleLogout}
-        style={{
-          padding: '10px 20px',
-          fontSize: '16px',
-          backgroundColor: '#007BFF',
-          color: 'white',
-          border: 'none',
-          borderRadius: '5px',
-          cursor: 'pointer',
-          marginTop: '20px',
-        }}
-      >
-        Logout
-      </button>
+    <div>
+      <h1>Posts</h1>
+      {posts.map((post) => (
+        <div key={post._id} className="post">
+          <h2>{post.title}</h2>
+          <p>{post.content}</p>
+          <div>
+            <h3>Comments</h3>
+            <ul>
+              {post.comments.map((comment, index) => (
+                <li key={index}>
+                  <strong>{comment.user}</strong>: {comment.text}
+                </li>
+              ))}
+            </ul>
+            <form
+              onSubmit={(event) => handleCommentSubmit(event, post._id)}
+              className="comment-form"
+            >
+              <input
+                type="text"
+                value={newComment}
+                onChange={handleCommentChange}
+                placeholder="Add a comment"
+                required
+              />
+              <button type="submit">Add Comment</button>
+            </form>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
