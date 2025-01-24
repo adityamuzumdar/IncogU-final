@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../AuthProvider'; // Import the AuthProvider hook
@@ -9,6 +9,13 @@ const Login = () => {
   const [message, setMessage] = useState<string>('');
   const navigate = useNavigate();
   const auth = useAuth(); // Access the authentication context
+
+  useEffect(() => {
+    // If the user is already authenticated, redirect to the home page
+    if (auth?.isAuthenticated) {
+      navigate('/');
+    }
+  }, [auth?.isAuthenticated, navigate]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +38,7 @@ const Login = () => {
       auth?.login(token);
 
       setMessage('Login successful!');
-      
+
       // Redirect to the home page
       navigate('/');
     } catch (error: any) {

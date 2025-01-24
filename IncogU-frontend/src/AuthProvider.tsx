@@ -8,14 +8,23 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface AuthProviderProps {
+  children: React.ReactNode;
+  isTokenValid?: (token: string) => boolean; // Optional validation function for tokens
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children, isTokenValid }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
-    // Check if token exists in localStorage on app load
+    // Check if token exists in localStorage and validate it if needed
     const token = localStorage.getItem('authToken');
-    setIsAuthenticated(!!token); // Set to true if token exists
-  }, []);
+    if (token && (!isTokenValid || isTokenValid(token))) {
+      setIsAuthenticated(true);
+    } else {
+      localStorage.removeItem('authToken'); // Remove invalid or expired token
+    }
+  }, [isTokenValid]);
 
   const login = (token: string) => {
     localStorage.setItem('authToken', token);

@@ -1,106 +1,94 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useAuth } from '../AuthProvider';
+import { useNavigate } from 'react-router-dom';
 
 interface Post {
   _id: string;
+  title: string;
+  content: string;
   user: {
     username: string;
     email: string;
   };
-  title: string;
-  content: string;
-  comments: Array<{
+  comments: {
     user: string;
     text: string;
-  }>;
+  }[];
 }
 
-const Home = () => {
+const Home: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
-  const [newComment, setNewComment] = useState<string>('');
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [newPost, setNewPost] = useState<{ title: string; content: string }>({ title: '', content: '' });
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch all posts from the backend
-    axios.get('http://localhost:5001/api/posts')
-      .then((response) => {
+    const fetchPosts = async () => {
+      try {
+        const response = await axios.get<Post[]>('http://localhost:5001/api/posts');
         setPosts(response.data);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error('Error fetching posts:', error);
-      });
+      }
+    };
+    fetchPosts();
   }, []);
 
-  const handleCommentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setNewComment(event.target.value);
-  };
-
-  const handleCommentSubmit = async (event: React.FormEvent, postId: string) => {
-    event.preventDefault();
-
-    if (!newComment) {
-      alert('Please enter a comment');
+  const handlePost = async () => {
+    if (!isAuthenticated) {
+      alert('Please login first');
       return;
     }
 
+    const token = localStorage.getItem('authToken');
     try {
-      // Post the comment to the backend
-      await axios.post(`http://localhost:5001/api/posts/${postId}/comments`, {
-        userId: 'userIdPlaceholder', // Replace with the actual userId (could be from context or props)
-        text: newComment,
-      });
-
-      // Update the state to reflect the new comment
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post._id === postId
-            ? {
-                ...post,
-                comments: [...post.comments, { user: 'userIdPlaceholder', text: newComment }],
-              }
-            : post
-        )
+      const response = await axios.post<Post>(
+        'http://localhost:5001/api/posts',
+        { title: newPost.title, content: newPost.content },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      // Clear the comment input field
-      setNewComment('');
+      setPosts([...posts, response.data]);
+      setNewPost({ title: '', content: '' });
     } catch (error) {
-      console.error('Error adding comment:', error);
+      console.error('Error creating post:', error);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
     <div>
-      <h1>Posts</h1>
-      {posts.map((post) => (
-        <div key={post._id} className="post">
-          <h2>{post.title}</h2>
-          <p>{post.content}</p>
-          <div>
-            <h3>Comments</h3>
-            <ul>
-              {post.comments.map((comment, index) => (
-                <li key={index}>
-                  <strong>{comment.user}</strong>: {comment.text}
-                </li>
-              ))}
-            </ul>
-            <form
-              onSubmit={(event) => handleCommentSubmit(event, post._id)}
-              className="comment-form"
-            >
-              <input
-                type="text"
-                value={newComment}
-                onChange={handleCommentChange}
-                placeholder="Add a comment"
-                required
-              />
-              <button type="submit">Add Comment</button>
-            </form>
+      <h1>Welcome to IncogU!</h1>
+      <button onClick={handleLogout}>Logout</button>
+      <h2>Create a Post</h2>
+      <input
+        type="text"
+        placeholder="Title"
+        value={newPost.title}
+        onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+      />
+      <textarea
+        placeholder="Content"
+        value={newPost.content}
+        onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+      />
+      <button onClick={handlePost}>Post</button>
+      <h2>All Posts</h2>
+      {posts.length === 0 ? (
+        <p>No posts available.</p>
+      ) : (
+        posts.map((post) => (
+          <div key={post._id}>
+            <h3>{post.title}</h3>
+            <p>{post.content}</p>
+            <p>Posted by: {post.user?.username || 'Anonymous'}</p>
           </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 };
