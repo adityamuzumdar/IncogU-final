@@ -61,34 +61,52 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div>
-      <h1>Welcome to IncogU!</h1>
-      <button onClick={handleLogout}>Logout</button>
-      <h2>Create a Post</h2>
-      <input
-        type="text"
-        placeholder="Title"
-        value={newPost.title}
-        onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-      />
-      <textarea
-        placeholder="Content"
-        value={newPost.content}
-        onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-      />
-      <button onClick={handlePost}>Post</button>
-      <h2>All Posts</h2>
-      {posts.length === 0 ? (
-        <p>No posts available.</p>
-      ) : (
-        posts.map((post) => (
-          <div key={post._id}>
-            <h3>{post.title}</h3>
-            <p>{post.content}</p>
-            <p>Posted by: {post.user?.username || 'Anonymous'}</p>
-          </div>
-        ))
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+      <div className="container mx-auto py-12 px-6">
+        <div className="flex justify-between items-center mb-10">
+          <h2 className="text-4xl font-extrabold text-gray-900">Dashboard</h2>
+          <button
+            onClick={handleLogout}
+            className="px-5 py-2 text-sm font-medium text-white bg-red-500 rounded-full shadow-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400"
+          >
+            Logout
+          </button>
+        </div>
+        <div className="bg-white p-8 rounded-lg shadow-lg mb-10">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-6">Create a Post</h2>
+          <input
+            type="text"
+            placeholder="Title"
+            value={newPost.title}
+            onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+            className="w-full px-4 py-3 mb-4 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+          <textarea
+            placeholder="Content"
+            value={newPost.content}
+            onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+            className="w-full px-4 py-3 mb-4 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+          <button
+            onClick={handlePost}
+            className="w-full px-4 py-3 text-white bg-indigo-600 rounded-md shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Post
+          </button>
+        </div>
+        <h2 className="text-2xl font-semibold text-gray-800 mb-6">All Posts</h2>
+        {posts.length === 0 ? (
+          <p className="text-center text-gray-600">No posts available.</p>
+        ) : (
+          posts.map((post) => (
+            <div key={post._id} className="bg-white p-6 mb-6 rounded-lg shadow-md">
+              <h3 className="text-xl font-bold text-gray-800">{post.title}</h3>
+              <p className="text-gray-700 mt-2">{post.content}</p>
+              <p className="text-sm text-gray-500 mt-4">Posted by: {post.user?.username || 'Anonymous'}</p>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 };
