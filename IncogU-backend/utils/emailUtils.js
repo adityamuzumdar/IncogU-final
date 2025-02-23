@@ -1,10 +1,12 @@
 // utils/emailUtils.js
+const mapper = {
+    'coeptech.ac.in': 'Coep',
+    'iitb.ac.in': 'IIT Bombay',
+}
 
-// Example for checking university email domain
 const checkEmailDomain = (email) => {
     const domain = email.split('@')[1];
-    // Assuming the domain of the university is '.edu'
-    return domain.endsWith('.in');
+    return mapper[domain];
   };
   
   module.exports = { checkEmailDomain };

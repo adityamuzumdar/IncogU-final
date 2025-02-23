@@ -39,28 +39,34 @@ const CompleteSignup = () => {
   };
 
   return (
-    <div>
-      <h1>Complete Your Signup</h1>
-      <p>{message}</p>
-      <form onSubmit={handlePasswordSubmit}>
-        {/* Email input */}
-        <input
-          type="email"
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        {/* Password input */}
-        <input
-          type="password"
-          placeholder="Enter your password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit">Set Password</button>
-      </form>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f0f2f5' }}>
+      <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', maxWidth: '400px', width: '100%' }}>
+        <h1 style={{ textAlign: 'center', color: '#333' }}>Complete Your Signup</h1>
+        <p style={{ textAlign: 'center', color: '#666' }}>{message}</p>
+        <form onSubmit={handlePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          {/* Email input */}
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+          />
+          {/* Password input */}
+          <input
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+          />
+          <button type="submit" style={{ padding: '10px', borderRadius: '4px', border: 'none', backgroundColor: '#007bff', color: '#fff', cursor: 'pointer' }}>
+            Set Password
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

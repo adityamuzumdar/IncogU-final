@@ -10,6 +10,7 @@ interface Post {
   user: {
     username: string;
     email: string;
+    university: string;
   };
   comments: {
     user: string;
@@ -103,6 +104,7 @@ const Home: React.FC = () => {
               <h3 className="text-xl font-bold text-gray-800">{post.title}</h3>
               <p className="text-gray-700 mt-2">{post.content}</p>
               <p className="text-sm text-gray-500 mt-4">Posted by: {post.user?.username || 'Anonymous'}</p>
+              <p className="text-sm text-gray-500">University: {post.user?.university || 'Unknown'}</p>
             </div>
           ))
         )}

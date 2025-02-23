@@ -5,19 +5,29 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { checkEmailDomain } = require('../utils/emailUtils'); // Utility to check email domain (e.g. university email)
+const crypto = require('crypto'); // Add this line to import the crypto module
+
+// Function to hash email
+function hashEmail(email) {
+  return crypto.createHash('sha256').update(email).digest('hex');
+}
 
 // Send Verification Email
 router.post('/signup', async (req, res) => {
   const { email } = req.body;
 
   // Validate university email
+  const university = checkEmailDomain(email);
   if (!checkEmailDomain(email)) {
     return res.status(400).json({ message: 'Please provide a valid university email.' });
   }
 
   try {
+    // Hash the email
+    const hashedEmail = hashEmail(email);
+
     // Check if the user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: hashedEmail });
 
     if (existingUser) {
       if (existingUser.isVerified) {
@@ -25,7 +35,7 @@ router.post('/signup', async (req, res) => {
       }
 
       // If user is not verified, resend verification email
-      const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      const token = jwt.sign({ email: hashedEmail }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
       const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -49,14 +59,15 @@ router.post('/signup', async (req, res) => {
 
     // Create a new user with isVerified as false
     const newUser = new User({
-      email,
+      email: hashedEmail, // Store hashed email
+      university: university,
       isVerified: false
     });
 
     await newUser.save();
 
     // Generate verification token
-    const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ email: hashedEmail }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     // Send verification email
     const transporter = nodemailer.createTransport({
@@ -93,10 +104,10 @@ router.get('/verify', async (req, res) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const { email } = decoded;
+    const { email: hashedEmail } = decoded;
 
     // Check if the user exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: hashedEmail });
     if (!existingUser) {
       return res.status(400).json({ message: 'User not found.' });
     }
@@ -125,8 +136,11 @@ router.post('/complete-signup', async (req, res) => {
   }
 
   try {
-    // Find the user by email
-    const user = await User.findOne({ email });
+    // Hash the email
+    const hashedEmail = hashEmail(email);
+
+    // Find the user by hashed email
+    const user = await User.findOne({ email: hashedEmail });
 
     if (!user) {
       return res.status(400).json({ message: 'User not found.' });
@@ -163,12 +177,20 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    // Find the user by email
-    const user = await User.findOne({ email });
+    // Hash the email
+    const hashedEmail = hashEmail(email);
+
+    // Find the user by hashed email
+    const user = await User.findOne({ email: hashedEmail });
 
     // If user doesn't exist
     if (!user) {
       return res.status(400).json({ message: 'User not found.' });
+    }
+
+    // Check if the password is set
+    if (!user.password) {
+      return res.status(400).json({ message: 'Please complete the signup process to set your password.' });
     }
 
     // Check if password is correct
