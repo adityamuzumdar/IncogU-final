@@ -1,11 +1,12 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Signup from './components/Auth/Signup';
-import VerifyEmail from './components/Auth/Verify';
-import CompleteSignup from './components/Auth/CompleteSignup';
+import Signup from './pages/Auth/Signup';
+import VerifyEmail from './pages/Auth/Verify';
+import CompleteSignup from './pages/Auth/CompleteSignup';
 import Home from './pages/Home';
-import Login from './components/Auth/Login';
+import Login from './pages/Auth/Login';
 import { AuthProvider } from './AuthProvider';
 import ProtectedRoute from './ProtectedRoute';
+import Post from './pages/Post';
 
 const App = () => {
   return (
@@ -24,6 +25,14 @@ const App = () => {
           <Route path="/verify" element={<VerifyEmail />} />
           <Route path="/complete-signup" element={<CompleteSignup />} />
           <Route path="/login" element={<Login />} />
+          <Route
+            path="/post/:id"
+            element={
+              <ProtectedRoute>
+                <Post />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </Router>
     </AuthProvider>

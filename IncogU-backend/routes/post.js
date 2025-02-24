@@ -6,8 +6,20 @@ const router = express.Router();
 // Fetch all posts
 router.get('/', async (req, res) => {
   try {
-    const posts = await Post.find().populate('user', 'username email');
+    const posts = await Post.find().populate('user', 'username email university');
     res.json(posts);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/:id', async (req, res) => {
+  try {
+    const post = await Post.findOne({ _id: req.params.id });
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    res.json(post);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -59,7 +59,7 @@ router.post('/signup', async (req, res) => {
 
     // Create a new user with isVerified as false
     const newUser = new User({
-      email: hashedEmail, // Store hashed email
+      email: hashedEmail,
       university: university,
       isVerified: false
     });

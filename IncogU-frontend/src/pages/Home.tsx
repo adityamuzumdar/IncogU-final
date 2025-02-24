@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../AuthProvider';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 interface Post {
   _id: string;
@@ -105,6 +105,9 @@ const Home: React.FC = () => {
               <p className="text-gray-700 mt-2">{post.content}</p>
               <p className="text-sm text-gray-500 mt-4">Posted by: {post.user?.username || 'Anonymous'}</p>
               <p className="text-sm text-gray-500">University: {post.user?.university || 'Unknown'}</p>
+              <Link to={`/post/${post._id}`} className="text-indigo-600 hover:underline">
+                View Post
+              </Link>
             </div>
           ))
         )}
