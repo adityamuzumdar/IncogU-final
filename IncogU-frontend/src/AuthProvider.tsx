@@ -1,8 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+interface User {
+  username: string;
+  university: string;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (token: string) => void;
+  user: User | null;
+  login: (token: string, user: User) => void;
   logout: () => void;
 }
 
@@ -15,29 +21,40 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children, isTokenValid }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Check if token exists in localStorage and validate it if needed
     const token = localStorage.getItem('authToken');
-    if (token && (!isTokenValid || isTokenValid(token))) {
-      setIsAuthenticated(true);
-    } else {
-      localStorage.removeItem('authToken'); // Remove invalid or expired token
+    const storedUser = localStorage.getItem('user');
+
+    if (token && storedUser) {
+      const parsedUser: User = JSON.parse(storedUser);
+      if (!isTokenValid || isTokenValid(token)) {
+        setIsAuthenticated(true);
+        setUser(parsedUser);
+      } else {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+      }
     }
   }, [isTokenValid]);
 
-  const login = (token: string) => {
+  const login = (token: string, user: User) => {
     localStorage.setItem('authToken', token);
+    localStorage.setItem('user', JSON.stringify(user));
     setIsAuthenticated(true);
+    setUser(user);
   };
 
   const logout = () => {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
     setIsAuthenticated(false);
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

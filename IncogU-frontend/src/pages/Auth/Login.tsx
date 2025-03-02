@@ -32,10 +32,10 @@ const Login = () => {
         password,
       });
 
-      const { token } = response.data; // Extract the token from the response
+      const { token, user } = response.data; // Extract the token from the response
 
       // Update authentication state using the context
-      auth?.login(token);
+      auth?.login(token, user);
 
       setMessage('Login successful!');
 

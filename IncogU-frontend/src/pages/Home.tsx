@@ -56,22 +56,11 @@ const Home: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       <div className="container mx-auto py-12 px-6">
         <div className="flex justify-between items-center mb-10">
           <h2 className="text-4xl font-extrabold text-gray-900">Dashboard</h2>
-          <button
-            onClick={handleLogout}
-            className="px-5 py-2 text-sm font-medium text-white bg-red-500 rounded-full shadow-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400"
-          >
-            Logout
-          </button>
         </div>
         <div className="bg-white p-8 rounded-lg shadow-lg mb-10">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6">Create a Post</h2>
