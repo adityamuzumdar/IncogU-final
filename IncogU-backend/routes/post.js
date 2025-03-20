@@ -46,9 +46,73 @@ router.post('/:postId/comments', authenticate, async (req, res) => {
     const post = await Post.findById(postId);
     if (!post) return res.status(404).json({ message: 'Post not found' });
 
-    post.comments.push({ user: req.user.id, text });
+    const newComment = {
+      user: req.user.id,
+      text,
+      replies: [],
+      createdAt: new Date()
+    };
+
+    post.comments.push(newComment);
     await post.save();
-    res.status(201).json(post);
+    res.status(201).json(newComment);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Add a reply to a comment (protected route)
+router.post('/:postId/comments/:commentId/replies', authenticate, async (req, res) => {
+  const { postId, commentId } = req.params;
+  const { text } = req.body;
+
+  try {
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    const comment = post.comments.id(commentId);
+    if (!comment) return res.status(404).json({ message: 'Comment not found' });
+
+    const newReply = {
+      user: req.user.id,
+      text,
+      createdAt: new Date()
+    };
+
+    comment.replies.push(newReply);
+    await post.save();
+    res.status(201).json(newReply);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Add a reply to a reply (protected route)
+router.post('/:postId/comments/:commentId/replies/:replyId/replies', authenticate, async (req, res) => {
+  const { postId, commentId, replyId } = req.params;
+  const { text } = req.body;
+
+  try {
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    const comment = post.comments.id(commentId);
+    if (!comment) return res.status(404).json({ message: 'Comment not found' });
+
+    const reply = comment.replies.id(replyId);
+    if (!reply) return res.status(404).json({ message: 'Reply not found' });
+
+    const newReply = {
+      user: req.user.id,
+      text,
+      createdAt: new Date(),
+      replies: []
+    };
+
+    if (!reply.replies) reply.replies = [];
+    reply.replies.push(newReply);
+    await post.save();
+    res.status(201).json(newReply);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
